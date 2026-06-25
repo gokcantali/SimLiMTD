@@ -1,0 +1,53 @@
+{
+    "applications": {
+        "sample-app": {
+            "components": {
+                "back_end": {
+                    "containers": 3,
+                    "priority": 1,
+                    "stateful": true,
+                    "migration_time": {
+                        "stateless": 1,
+                        "cold": 15,
+                        "pre_copy": 10,
+                        "post_copy": 5,
+                        "hybrid": 8
+                    },
+                    "epss_score": 0.05,
+                    "connected_to": ["front_end", "database"],
+                    "publicly_exposed": false
+                },
+                "front_end": {
+                    "containers": 2,
+                    "priority": 2,
+                    "stateful": false,
+                    "migration_time": {
+                        "stateless": 1,
+                        "cold": 10,
+                        "pre_copy": 5,
+                        "post_copy": 3,
+                        "hybrid": 4
+                    },
+                    "epss_score": 0.04,
+                    "connected_to": ["back_end"],
+                    "publicly_exposed": true
+                },
+                "database": {
+                    "containers": 1,
+                    "priority": 0,
+                    "stateful": true,
+                    "migration_time": {
+                        "stateless": 1,
+                        "cold": 20,
+                        "pre_copy": 15,
+                        "post_copy": 10,
+                        "hybrid": 12
+                    },
+                    "epss_score": 0.03,
+                    "connected_to": ["back_end"],
+                    "publicly_exposed": false
+                }
+            }
+        }
+    }
+}
