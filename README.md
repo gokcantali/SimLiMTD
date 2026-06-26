@@ -24,8 +24,7 @@ The repository has been reorganized into scenario-specific modules:
 Supporting folders:
 
 - [microservice-configs/](microservice-configs) stores the default application configuration and any uploaded configs
-- [results/](results) stores generated outputs, summaries, plots, and logs
-- [data/](data) is available for auxiliary datasets or experiment inputs
+- [results/](results) stores generated outputs, summaries, plots, and logs (not version controlled)
 
 ## Requirements
 
