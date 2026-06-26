@@ -3,7 +3,7 @@ SimPy Discrete-Event Simulation for MTD (Moving Target Defense)
 Application: Container Migration & Data Exfiltration
 
 Run example:
-	python exfiltration_simulation.py --runtime 3600 --arrival-rate 0.01 --output results.json
+	python scenarios/exfiltration/run_single_simulation.py --runtime 3600 --arrival-rate 0.01 --output results.json
 
 This script models containers that can be exfiltrated by arriving attackers.
 Containers are migrated periodically (MTD). Migrations are chosen randomly
@@ -459,7 +459,7 @@ def migrate_container(env: simpy.Environment, container: Container, params: dict
 
 def run_simulation(args):
 	# configure logging
-	logger = logging.getLogger('exfiltration_simulation')
+	logger = logging.getLogger('run_single_simulation')
 	# remove existing handlers
 	for h in list(logger.handlers):
 		logger.removeHandler(h)
@@ -730,7 +730,7 @@ def parse_args():
 	p.add_argument('--time-step', type=float, default=1.0, help='Simulation time step for attacker progress (seconds)')
 	p.add_argument('--output', type=str, default='simulation_results.json', help='Output JSON file path')
 	p.add_argument('--seed', type=int, default=42, help='Random seed')
-	p.add_argument('--log-file', type=str, default='exfiltration_simulation.log', help='File to write detailed logs')
+	p.add_argument('--log-file', type=str, default='exfiltration_single_simulation.log', help='File to write detailed logs')
 	p.add_argument('--log-level', type=str, default='INFO', help='Log level for file output (DEBUG, INFO, WARNING, ERROR)')
 	return p.parse_args()
 

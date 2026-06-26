@@ -6,7 +6,7 @@ A comprehensive Streamlit-based GUI for running malware and exfiltration simulat
 in both single-config and multiple-config modes.
 
 Usage:
-    streamlit run simulation_gui.py
+    streamlit run dashboard.py
 """
 
 import streamlit as st
@@ -252,7 +252,7 @@ def run_single_config(scenario, params, config_file):
     
     if scenario == 'malware':
         cmd = [
-            'python', 'malware_simulation.py',
+            'python', 'scenarios/malware/run_single_simulation.py',
             '--runtime', str(params['runtime']),
             '--time-budget', str(params['time_budget']),
             '--num-nodes', str(params['num_nodes']),
@@ -272,7 +272,7 @@ def run_single_config(scenario, params, config_file):
             cmd.extend(['--manual-migration-period', '--migration-period', str(params.get('migration_period', 300.0))])
     else:  # exfiltration
         cmd = [
-            'python', 'exfiltration_simulation.py',
+            'python', 'scenarios/exfiltration/run_single_simulation.py',
             '--runtime', str(params['runtime']),
             '--time-budget', str(params['time_budget']),
             '--num-nodes', str(params['num_nodes']),
@@ -304,7 +304,7 @@ def run_multiple_config(scenario, params, config_file):
     
     if scenario == 'malware':
         cmd = [
-            'python', 'malware_monte_carlo.py',
+            'python', 'scenarios/malware/run_monte_carlo.py',
             '--time-budget-range', 
             str(params['time_budget_start']),
             str(params['time_budget_stop']),
@@ -335,7 +335,7 @@ def run_multiple_config(scenario, params, config_file):
             ])
     else:  # exfiltration
         cmd = [
-            'python', 'exfiltration_monte_carlo.py',
+            'python', 'scenarios/exfiltration/run_monte_carlo.py',
             '--time-budget-range',
             str(params['time_budget_start']),
             str(params['time_budget_stop']),
@@ -568,11 +568,8 @@ def display_multiple_results(scenario, output_dir):
         # Run analysis script to generate plots
         analysis_dir = output_dir / 'analysis'
         
-        if scenario == 'malware':
-            analysis_script = 'analyze_malware_results.py'
-        else:
-            analysis_script = 'analyze_exfiltration_results.py'
-        
+        analysis_script =  Path('scenarios') / scenario / 'analyze_results.py'
+
         # Check if analysis has been run
         if not analysis_dir.exists():
             with st.spinner("Generating visualizations..."):

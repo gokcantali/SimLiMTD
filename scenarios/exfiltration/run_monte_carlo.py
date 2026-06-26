@@ -2,11 +2,11 @@
 """
 Monte Carlo Simulation for Exfiltration Defense Analysis
 
-Runs exfiltration_simulation.py with various configurations across multiple seeds
+Runs run_monte_carlo.py with various configurations across multiple seeds
 and aggregates results to analyze the effectiveness of different MTD strategies.
 
 Usage:
-    python exfiltration_monte_carlo.py [--runs-per-config N] [--parallel]
+    python scenarios/exfiltration/run_monte_carlo.py [--runs-per-config N] [--parallel]
 """
 
 import argparse
@@ -62,7 +62,7 @@ def run_simulation(config: dict, output_dir: Path) -> Dict:
     
     # Build command
     cmd = [
-        "python", "exfiltration_simulation.py",
+        "python", "scenarios/exfiltration/run_single_simulation.py",
         "--runtime", str(config['runtime']),
         "--time-budget", str(config['time_budget']),
         "--num-nodes", str(config['num_nodes']),

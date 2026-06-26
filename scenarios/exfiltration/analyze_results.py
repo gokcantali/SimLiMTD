@@ -3,7 +3,7 @@
 Analyze Exfiltration Monte Carlo simulation results and generate visualizations.
 
 Usage:
-    python analyze_exfiltration_results.py results/exfiltration/monte_carlo_summary_*.csv
+    python scenarios/exfiltration/analyze_results.py results/exfiltration/monte_carlo_summary_*.csv
 """
 
 import sys
@@ -503,9 +503,9 @@ def print_summary_statistics(df: pd.DataFrame):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python analyze_exfiltration_results.py <summary.csv>")
+        print("Usage: python scenarios/exfiltration/analyze_results.py <summary.csv>")
         print("\nExample:")
-        print("  python analyze_exfiltration_results.py results/exfiltration/monte_carlo_summary_*.csv")
+        print("  python scenarios/exfiltration/analyze_results.py results/exfiltration/monte_carlo_summary_*.csv")
         sys.exit(1)
     
     csv_file = sys.argv[1]
