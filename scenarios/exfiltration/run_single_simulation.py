@@ -62,6 +62,18 @@ class Container:
 		return self.exfiltrated >= self.max_data
 
 
+def get_migration_time_stats(container: Container, method: str) -> tuple[float, float]:
+	"""Return the mean and std for a container's migration method."""
+	raw = container.migration_times.get(method, {})
+	if isinstance(raw, dict):
+		mean = float(raw.get("mean", 10.0))
+		std = float(raw.get("std", max(0.1, mean * 0.15)))
+		return mean, std
+
+	mean = float(raw)
+	return mean, max(0.1, mean * 0.15)
+
+
 def malicious_tenant_attacker(env: simpy.Environment, malicious_tenant: Tenant, victim_containers: List[Container], 
                               params: dict, metrics: dict, logger, attacker_rng):
 	"""
@@ -237,13 +249,15 @@ def exfiltration_decay_process(env: simpy.Environment, containers: List[Containe
 
 def select_migration_method(container: Container, method_policy: str) -> str:
 	"""Select which migration method to use based on policy."""
+	if method_policy == "no_mtd":
+		return "no_mtd"
 	if method_policy == "always_precopy":
 		return "pre_copy"
 	elif method_policy == "always_cold":
 		return "cold"
 	elif method_policy == "min_time":
 		# Choose the method with minimum migration time for this container type
-		return min(container.migration_times.keys(), key=lambda m: container.migration_times[m])
+		return min(container.migration_times.keys(), key=lambda m: get_migration_time_stats(container, m)[0])
 	else:
 		return "pre_copy"  # default
 
@@ -267,23 +281,25 @@ def choose_container_to_migrate(containers: List[Container], policy: str, rng: r
 
 def calculate_avg_migration_time(containers: List[Container], method_policy: str) -> float:
 	"""Calculate expected average migration time based on method policy."""
+	if method_policy == "no_mtd":
+		return float('inf')
 	if method_policy == "always_precopy":
 		# Average of all pre_copy times across all containers
-		times = [c.migration_times.get("pre_copy", 0) for c in containers]
+		times = [get_migration_time_stats(c, "pre_copy")[0] for c in containers]
 		return sum(times) / len(times) if times else 10.0
 	elif method_policy == "always_cold":
 		# Average of all pre_copy times across all containers
-		times = [c.migration_times.get("cold", 15) for c in containers]
+		times = [get_migration_time_stats(c, "cold")[0] for c in containers]
 		return sum(times) / len(times) if times else 10.0
 	elif method_policy == "min_time":
 		# Average of minimum migration times for each container
-		min_times = [min(c.migration_times.values()) for c in containers]
+		min_times = [min(get_migration_time_stats(c, m)[0] for m in c.migration_times.keys()) for c in containers]
 		return sum(min_times) / len(min_times) if min_times else 5.0
 	else:
 		# For other policies, compute overall average
 		all_times = []
 		for c in containers:
-			all_times.extend(c.migration_times.values())
+			all_times.extend(get_migration_time_stats(c, m)[0] for m in c.migration_times.keys())
 		return sum(all_times) / len(all_times) if all_times else 10.0
 
 
@@ -310,6 +326,10 @@ def infection_decay_process(env: simpy.Environment, nodes: List[Node], params: d
 
 
 def migration_scheduler(env: simpy.Environment, containers: List[Container], params: dict, metrics: dict, nodes: List[Node], logger, migration_rng):
+	if params.get('migration_method_policy') == 'no_mtd':
+		logger.info("Migration disabled by no_mtd policy; skipping all migrations")
+		return
+
 	# Calculate migration period automatically based on runtime, time budget, and expected migration time
 	if params.get('auto_migration_period', True):
 		# Estimate average migration time based on policy
@@ -352,11 +372,9 @@ def migrate_container(env: simpy.Environment, container: Container, params: dict
 	
 	# Select migration method based on policy
 	method = select_migration_method(container, params['migration_method_policy'])
-	mean_migration_time = container.migration_times[method]
+	mean_migration_time, std_dev = get_migration_time_stats(container, method)
 	
 	# Add realistic variation to migration time using normal distribution
-	# Standard deviation is 15% of mean to capture variance in migration performance
-	std_dev = mean_migration_time * 0.15
 	# Ensure migration time is positive (use max with small minimum value)
 	migration_time = max(0.1, migration_rng.gauss(mean_migration_time, std_dev))
 	
@@ -724,7 +742,7 @@ def parse_args():
 	p.add_argument('--infection-decay-rate', type=float, default=0.01, help='Rate at which cluster infection decays per decay cycle (0.0-1.0, higher = faster decay, reduced to 0.01 to allow meaningful infection buildup)')
 	p.add_argument('--exfiltration-decay-rate', type=float, default=0.05, help='Rate at which exfiltrated data decays when container is out of attacker reach (per decay cycle)')
 	p.add_argument('--migration-policy', type=str, default='random', choices=['random', 'highest_progress', 'in_most_infected_cluster', 'priority_based'], help='Policy for selecting containers to migrate')
-	p.add_argument('--migration-method-policy', type=str, default='always_precopy', choices=['always_precopy', 'always_cold', 'min_time'], help='Policy for selecting migration method: always_precopy (baseline) or always_cold or min_time')
+	p.add_argument('--migration-method-policy', type=str, default='always_precopy', choices=['always_precopy', 'always_cold', 'min_time', 'no_mtd'], help='Policy for selecting migration method: always_precopy (baseline), always_cold, min_time, or no_mtd')
 	p.add_argument('--time-budget', type=float, default=1000.0, help='Total time budget for migrations (seconds)')
 	p.add_argument('--migration-rollback', type=float, default=0.30, help='Percentage of exfiltration progress lost during migration (0.0-1.0, default 0.30 = 30%% rollback for security hardening)')
 	p.add_argument('--time-step', type=float, default=1.0, help='Simulation time step for attacker progress (seconds)')

@@ -473,7 +473,7 @@ def main():
         
         seeds = list(range(args.seed_range[0], args.seed_range[1] + 1, args.seed_range[2]))
     
-    migration_policies = ['always_precopy', 'always_cold', 'min_time']
+    migration_policies = ['always_precopy', 'min_time', 'no_mtd']
     
     # Generate migration period range (only used if manual mode)
     if args.auto_migration_period:
